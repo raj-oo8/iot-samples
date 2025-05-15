@@ -1,0 +1,50 @@
+name: Create Azure IoT Infrastructure
+
+on:
+  workflow_dispatch:
+    inputs:
+      logLevel:
+        description: 'Log level'
+        required: true
+        default: 'warning'
+      tags:
+        description: 'Tags'
+        required: false
+
+jobs:
+  create-azure-iot-infra:
+    name: Create Azure IoT Infrastructure
+    runs-on: ubuntu-latest
+
+    env:
+        AZURE_IOT_HUB_NAME: ""
+        AZURE_IOT_SERVICES_RG: "iot-services"
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Set up Azure CLI
+      uses: azure/login@v2.1.0
+      with:
+        creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+    - name: Generate Azure IoT Hub name
+      run: |
+        BASE_NAME="azure-iot-hub"
+        GUID=$(uuidgen) # Generates a new GUID
+        AZURE_IOT_HUB_NAME="${BASE_NAME}-${GUID}"
+        echo "AZURE_IOT_HUB_NAME=$AZURE_IOT_HUB_NAME" >> $GITHUB_ENV
+        echo "Creating Azure IoT Hub with name: $AZURE_IOT_HUB_NAME"
+
+    - name: Run Azure CLI commands
+      run: |
+        echo "Log level: ${{ github.event.inputs.logLevel }}"
+        echo "Tags: ${{ github.event.inputs.tags }}"
+        az iot hub create --resource-group ${{ env.AZURE_IOT_SERVICES_RG }} --name ${{ env.AZURE_IOT_HUB_NAME }} --sku F1 --partition-count 2
+        az iot hub device-identity create --device-id raspberryPiZero2W --edge-enabled --hub-name ${{ env.AZURE_IOT_HUB_NAME }}
+        az deployment group create --resource-group ${{ env.AZURE_IOT_SERVICES_RG }} --template-uri "https://raw.githubusercontent.com/Azure/iotedge-vm-deploy/main/edgeDeploy.json" --parameters dnsLabelPrefix='<REPLACE_WITH_VM_NAME>' --parameters adminUsername='azureUser' --parameters deviceConnectionString=$(az iot hub device-identity connection-string show --device-id myEdgeDevice --hub-name <REPLACE_WITH_HUB_NAME> -o tsv) --parameters authenticationType='password' --parameters adminPasswordOrKey="<REPLACE_WITH_PASSWORD>"
+        # Add your Azure CLI commands here
+
+    - name: Logout of Azure CLI
+      run: az logout
