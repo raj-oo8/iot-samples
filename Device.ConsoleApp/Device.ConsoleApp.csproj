@@ -10,8 +10,8 @@
 
   <ItemGroup>
     <PackageReference Include="Microsoft.Azure.Devices.Client" Version="1.42.3" />
-    <PackageReference Include="Microsoft.Extensions.Configuration" Version="9.0.4" />
-    <PackageReference Include="Microsoft.Extensions.Configuration.UserSecrets" Version="6.0.1" />
+    <PackageReference Include="Microsoft.Extensions.Configuration" Version="9.0.5" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.UserSecrets" Version="9.0.5" />
   </ItemGroup>
 
 </Project>
